@@ -1,0 +1,159 @@
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<script	src="js/xdomain.min.js"	slave="http://localhost:8983/solr/proxy.html"></script>
+<script src="js/jquery-1.11.2.min.js"></script>
+<link rel="stylesheet" href="css/bootstrap.min.css">
+<link rel="stylesheet" href="css/bootstrap-theme.min.css">
+<link rel="stylesheet" href="css/chosen.css">
+<!-- <script src="js/highcharts.js"></script> -->
+<script src="http://code.highcharts.com/stock/highstock.js"></script>
+<script	src="js/bootstrap.min.js"></script>
+<script type="text/javascript" src="js/chosen.jquery.js"></script>
+<script type="text/javascript" src="companyhistory.js"></script>
+<title>Stock Analysis</title>
+</head>
+<body>
+	<div class="container">
+		<h1>Stock Analysis</h1>
+		<ul class="nav nav-pills">
+			<li role="presentation"><a href="#">LIVE Stocks</a></li>
+			<li role="presentation"><a href="top10gainers.html">Top 10 Gainers</a></li>
+			<li role="presentation" class="active"><a href="#">Company History</a></li>
+		</ul>
+		<div class="container">
+			<div class="ui-widget">
+
+				<select id="combobox" data-placeholder="Choose a company..."
+					class="chosen-select">
+					<option>Select company name...</option>
+				</select>
+			</div>
+			<div id="container1"></div>
+		</div>
+	</div>
+	<script type="text/javascript">
+		// populate the company names
+		$.getJSON('http://localhost:8983/solr/collection1/select?q=*%3A*&fl=SC_NAME&rows=0&wt=json&indent=true&facet=true&facet.field=SC_NAME&facet.limit=-1',
+						function(data) {
+							dd = data.facet_counts.facet_fields.SC_NAME
+							//dd = data.response.docs
+							// console.log(dd.length)
+							for (i = 0; i < dd.length; i++)
+								if (isNaN(dd[i])) {
+									$('#combobox').append('<option>' + dd[i]+ '</option>')
+								}
+							//$("#combobox").chosen() //Initialize the searchable dropdown
+							$("#combobox").trigger("chosen:updated");
+						});
+		// Perform action when company selected
+		$("#combobox").chosen().change(
+				function() {
+					selectedCompany = $('#combobox option:selected').text();
+					console.log(selectedCompany)
+					//$(function() {
+						url = 'http://localhost:8983/solr/collection1/select?q=*%3A*&fq=SC_NAME:"'+selectedCompany+'"&sort=DATE+asc&rows=10000000&fl=DATE%2CGAIN%3Asub(CLOSE%2CPREVCLOSE)&wt=json&indent=true'
+						//console.log("URL:"+url)
+						//url = "http://localhost:8983/solr/collection1/select?q=*%3A*&fq=SC_NAME:"+selectedCompany+"&fl=SC_NAME%2CGAIN%3Asub(CLOSE%2CPREVCLOSE)&wt=json&indent=true"
+						$.getJSON(url, function (data) {
+							dd = data.response.docs;
+							gains = [];
+							for(var i=0; i<dd.length; i++) {
+								//d = new Date();
+								gains.push([
+								            Date.parse(dd[i].DATE)
+								            , parseFloat(dd[i].GAIN)])
+							}
+							//console.log("array size:"+gains.length)
+							//console.log(gains)
+					        // Create a timer
+					        //var start = +new Date();
+
+					        // Create the chart
+					        $('#container1').highcharts('StockChart', {
+					            chart: {
+					                /*events: {
+					                    load: function () {
+					                        this.setTitle(null, {
+					                            text: 'Built chart in ' + (new Date() - start) + 'ms'
+					                        });
+					                    }
+					                },*/
+					                zoomType: 'x'
+					            },
+
+					            rangeSelector: {
+					                
+					                buttons: [{
+					                    type: 'day',
+					                    count: 3,
+					                    text: '3d'
+					                }, {
+					                    type: 'week',
+					                    count: 1,
+					                    text: '1w'
+					                }, {
+					                    type: 'month',
+					                    count: 1,
+					                    text: '1m'
+					                }, {
+					                    type: 'month',
+					                    count: 6,
+					                    text: '6m'
+					                }, {
+					                    type: 'year',
+					                    count: 1,
+					                    text: '1y'
+					                }, {
+					                    type: 'all',
+					                    text: 'All'
+					                }],
+					                selected: 3
+					            },
+								
+					            xAxis : {
+									categories : true,
+									//type: 'datetime',
+									title : {
+										text : "TIMELINE"
+									},
+								labels: {
+						            //format: '{value:%Y-%m-%d}',
+						            rotation: 45,
+						            align: 'left'
+						        }
+								},
+					            
+					            yAxis: {
+					                title: {
+					                    text: 'Gain'
+					                }
+					            },
+
+					            title: {
+					                text: 'Stock gains'
+					            },
+
+					            //subtitle: {
+					              //  text: 'Built chart in ...' // dummy text to reserve space for dynamic subtitle
+					           // },
+
+					            series: [{
+					                name: 'gain',
+					                data: gains,
+							        negativeColor: 'red'
+					               // pointStart: Date.UTC(2013, 1, 1)//,
+					                //pointInterval: 36000 * 10000,
+					               // tooltip: {
+					                 //   valueDecimals: 1//,
+					                //}
+					            }]
+
+					        });
+					    });
+			});
+
+		//});
+	</script>
+</body>
+</html>

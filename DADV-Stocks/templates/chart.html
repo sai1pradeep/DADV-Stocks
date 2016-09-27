@@ -1,0 +1,51 @@
+<html>
+<head>
+<script src="http://cdn.rawgit.com/jpillora/xdomain/0.6.17/dist/xdomain.min.js" slave="http://localhost:8983/solr/proxy.html"></script>
+<script src="http://code.jquery.com/jquery-1.11.2.min.js"></script>
+<script src="http://github.highcharts.com/bdf6471/highcharts.js"></script>
+<!-- <script src="http://code.highcharts.com/stock/highstock.js"></script> -->
+<!-- <script src="http://code.highcharts.com/stock/modules/exporting.js"></script> -->
+</head>
+<body>
+<div id="container1" style="height: 400px; min-width: 310px"></div>
+<script type="text/javascript">
+dd = null
+$(function () {
+  $.getJSON('http://localhost:8983/solr/collection1/select?q=*%3A*&fq=SC_CODE%3A500002&wt=json&indent=true&fl=DATE,CLOSE', function(data) {
+      var close=[]
+      for(i = 0;i<data.response.docs.length;i++)
+      { // Parsing the date... what to do with it?
+        close.push([new Date(Date.parse(data.response.docs[i].DATE)),parseFloat(data.response.docs[i].CLOSE)]);
+      }
+      console.log(close);
+      //options.series.data = close;    //using series[0] it only plots the first row of the JSON
+      $('#container1').highcharts({
+        chart: {
+          type: "column"
+        },
+        title: {
+          text: "Stock Analysis"
+        },
+        xAxis: {
+          categories: true,
+          title: {
+            text: "Dates"
+          }
+        },
+        yAxis: {
+          title: {
+            text: "CLOSE value"
+          }
+        },
+
+        series: [{
+          data: close
+        }]
+      });
+    });
+
+    console.log("hello:")
+  });
+</script>
+</body>
+</html>

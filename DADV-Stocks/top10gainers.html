@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="js/xdomain.min.js" slave="http://localhost:8983/solr/proxy.html"></script>
+<script src="js/jquery-1.11.2.min.js"></script>
+<script src="js/highcharts.js"></script>
+<link rel="stylesheet" href="css/bootstrap.min.css">
+<link rel="stylesheet" href="css/bootstrap-theme.min.css">
+<script	src="js/bootstrap.min.js"></script>
+<title>Stock Analysis</title>
+</head>
+<body>
+	<div class="container">
+		<h1>Stock Analysis</h1>
+		<ul class="nav nav-pills">
+			<li role="presentation" ><a href="index.html">LIVE Stocks</a></li>
+			<li role="presentation" class="active"><a href="#">Top 10 Gainers</a></li>
+			<li role="presentation"><a href="CompanyHistory.html">Company History</a></li>
+		</ul>
+		<div id="container1" style="height: 400px; min-width: 310px">
+			<script type="text/javascript">
+			
+			$(function () {
+			  $.getJSON('http://localhost:8983/solr/collection1/select?q=*%3A*&sort=sub(CLOSE%2CPREVCLOSE)+desc&start=0&rows=10&fl=SC_NAME%2CGAIN%3Asub(CLOSE%2CPREVCLOSE)&wt=json&indent=true', function(data) {
+			      var close=[]
+			      for(i = 0;i<data.response.docs.length;i++)
+			      { 
+			        close.push([data.response.docs[i].SC_NAME,parseFloat(data.response.docs[i].GAIN)]);
+			      }
+			      
+			      //using series[0] it only plots the first row of the JSON
+			      
+			      $('#container1').highcharts({
+			        chart: {
+			          type: "column"
+			        },
+			        title: {
+			          text: "Stock Analysis"
+			        },
+			        xAxis: {
+			          categories: true,
+			          title: {
+			            text: "Companies"
+			          }
+			        },
+			        yAxis: {
+			          title: {
+			            text: "GAIN"
+			          }
+			        },
+			
+			        series: [{
+			          data: close
+			        }]
+			      });
+			    });
+			
+			    console.log("hello:")
+			  });
+			</script>
+		</div>
+	</div>
+</body>
+</html>
